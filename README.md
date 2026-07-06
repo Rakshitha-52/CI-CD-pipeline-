@@ -31,3 +31,12 @@ Features:
 30 numerical input features
 Binary classification problem
 Predicts whether a tumor is malignant or benign
+
+Technologies Used:
+
+Python 3.x
+Scikit-learn
+Pandas
+NumPy
+Joblib
+Git & GitHub
