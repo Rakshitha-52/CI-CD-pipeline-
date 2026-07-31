@@ -1,48 +1,70 @@
 import joblib
+import numpy as np
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 
-# Step 1: Load saved model and scaler
+print("Loading saved model...")
+
+# Load the saved model and scaler
 model = joblib.load("model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-print("Model loaded successfully:", type(model).__name__)
+print(f"Model type: {type(model).__name__}")  
 
-# Step 2: Prepare sample input data
+# Load the dataset
 data = load_breast_cancer()
+X, y = data.data, data.target
 
-X = data.data
-y = data.target
-
+# Split the data (same split as training)
 _, X_test, _, y_test = train_test_split(
     X,
     y,
     test_size=0.2,
     random_state=42,
-    stratify=y
+    stratify=y,
 )
 
-sample_input = X_test[:3]
+# Pick 5 mixed samples (some malignant, some benign)
+sample_indices = [0, 5, 10, 20, 50]
+samples = X_test[sample_indices]
+true_labels = y_test[sample_indices]
 
-# Scale input (required for Logistic Regression)
-sample_input_scaled = scaler.transform(sample_input)
+# Apply the same scaling used during training
+samples_scaled = scaler.transform(samples)
 
-# Step 3: Run predictions
-predictions = model.predict(sample_input_scaled)
-probabilities = model.predict_proba(sample_input_scaled)
+# Run predictions
+predictions = model.predict(samples_scaled)
+probabilities = model.predict_proba(samples_scaled)
 
-# Step 4: Print results
-class_names = data.target_names
+# Display results
+print("\n--- Prediction Results ---")
+print(f'{"Sample":<8} {"True Label":<15} {"Predicted":<15} {"Confidence"}')
+print("-" * 55)
 
-print("\nPrediction Results")
-print("-" * 60)
+for i in range(len(sample_indices)):
+    true_name = data.target_names[true_labels[i]]
+    pred_name = data.target_names[predictions[i]]
+    confidence = max(probabilities[i]) * 100
 
-for i in range(3):
-    print(
-        f"Sample {i+1}: "
-        f"True = {class_names[y_test[i]]} | "
-        f"Predicted = {class_names[predictions[i]]} | "
-        f"P(malignant) = {probabilities[i][0]:.4f} | "
-        f"P(benign) = {probabilities[i][1]:.4f}"
+    match = (
+        "CORRECT"
+        if true_labels[i] == predictions[i]
+        else "WRONG"
     )
 
+    print(
+        f"{i + 1:<8} "
+        f"{true_name:<15} "
+        f"{pred_name:<15} "
+        f"{confidence:.1f}% {match}"
+    )
+
+# Summary
+n_correct = sum(true_labels == predictions)
+
+print(f"\nVerification: {n_correct}/{len(sample_indices)} correct")
+
+if n_correct == len(sample_indices):
+    print("✅ All predictions correct — model.pkl is verified and ready!")
+else:
+    print("❌ Some predictions failed — check model training.")

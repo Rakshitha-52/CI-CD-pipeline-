@@ -1,178 +1,177 @@
 import os
-import joblib
-import pandas as pd
+import warnings
 
+import joblib
+import numpy as np
+import pandas as pd
 from sklearn.datasets import load_breast_cancer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    f1_score,
+    precision_score,
+    recall_score,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+warnings.filterwarnings("ignore")
 
-from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
-    precision_score,
-    recall_score,
-    f1_score,
-    classification_report
+# ==========================================================
+# STEP 1: Load and Explore Dataset
+# ==========================================================
+
+print("BREAST CANCER CLASSIFICATION — ML TRAINING PIPELINE")
+print("=" * 60)
+
+data = load_breast_cancer()
+
+df = pd.DataFrame(data.data, columns=data.feature_names)
+df["target"] = data.target
+
+print(f"\nDataset Shape: {df.shape}")
+print(f"Classes: {list(data.target_names)}")
+
+print("\nClass Distribution:")
+print(df["target"].value_counts())
+
+print(f"\nMissing Values: {df.isnull().sum().sum()}")
+
+# ==========================================================
+# STEP 2: Data Preprocessing
+# ==========================================================
+
+X = data.data
+y = data.target
+
+# Train-test split (80% training, 20% testing)
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y,
 )
 
+print(f"\nTraining Samples : {X_train.shape[0]}")
+print(f"Testing Samples  : {X_test.shape[0]}")
 
-def evaluate_model(model_name, y_true, y_pred, target_names):
-    """
-    Display evaluation metrics for a model.
-    """
+# Feature Scaling (needed for Logistic Regression)
+scaler = StandardScaler()
 
-    print("\n" + "=" * 60)
-    print(f"{model_name}")
-    print("=" * 60)
+X_train_sc = scaler.fit_transform(X_train)
+X_test_sc = scaler.transform(X_test)
 
-    print(f"Accuracy : {accuracy_score(y_true, y_pred):.4f}")
-    print(f"Precision: {precision_score(y_true, y_pred):.4f}")
-    print(f"Recall   : {recall_score(y_true, y_pred):.4f}")
-    print(f"F1 Score : {f1_score(y_true, y_pred):.4f}")
+# ==========================================================
+# STEP 3: Train Logistic Regression
+# ==========================================================
 
-    print("\nConfusion Matrix:")
-    print(confusion_matrix(y_true, y_pred))
+print("\n--- Training Logistic Regression ---")
 
-    print("\nClassification Report:")
-    print(classification_report(
-        y_true,
-        y_pred,
-        target_names=target_names
-    ))
+lr = LogisticRegression(
+    max_iter=10000,
+    random_state=42,
+)
 
+lr.fit(X_train_sc, y_train)
 
-def main():
+y_pred_lr = lr.predict(X_test_sc)
 
-    print("\nLoading Breast Cancer Dataset...\n")
-    # 1. LOAD DATASET
+acc_lr = accuracy_score(y_test, y_pred_lr)
+prec_lr = precision_score(y_test, y_pred_lr)
+rec_lr = recall_score(y_test, y_pred_lr)
+f1_lr = f1_score(y_test, y_pred_lr)
 
-    data = load_breast_cancer()
+print(f"Accuracy : {acc_lr:.4f}")
+print(f"Precision: {prec_lr:.4f}")
+print(f"Recall   : {rec_lr:.4f}")
+print(f"F1 Score : {f1_lr:.4f}")
 
-    X = data.data
-    y = data.target
-
-    df = pd.DataFrame(X, columns=data.feature_names)
-    df["target"] = y
-
-    print("Dataset Information")
-    print("-" * 30)
-    print(f"Shape: {df.shape}")
-    print(f"Features: {len(data.feature_names)}")
-    print(f"Classes: {list(data.target_names)}")
-
-    print("\nClass Distribution:")
-    print(df["target"].value_counts())
-
-    
-    # 2. DATA PREPROCESSING
-    print("\nChecking Missing Values...")
-    print(f"Missing Values: {df.isnull().sum().sum()}")
-
-    # Train-Test Split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,y,test_size=0.20,random_state=42,stratify=y
-    )
-
-    print("\nTrain-Test Split")
-    print("-" * 30)
-    print(f"X_train Shape: {X_train.shape}")
-    print(f"X_test Shape : {X_test.shape}")
-
-    
-    # 3. FEATURE SCALING
-
-    scaler = StandardScaler()
-
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-
-    # 4. LOGISTIC REGRESSION
-    
-    print("\nTraining Logistic Regression...")
-
-    lr = LogisticRegression(
-        max_iter=10000,
-        random_state=42
-    )
-
-    lr.fit(X_train_scaled, y_train)
-
-    y_pred_lr = lr.predict(X_test_scaled)
-
-    evaluate_model(
-        "Logistic Regression",
+print("\nClassification Report:")
+print(
+    classification_report(
         y_test,
         y_pred_lr,
-        data.target_names
+        target_names=data.target_names,
     )
+)
 
-    lr_accuracy = accuracy_score(y_test, y_pred_lr)
+# ==========================================================
+# STEP 4: Train Random Forest
+# ==========================================================
 
-    
-    # 5. RANDOM FOREST
+print("\n--- Training Random Forest ---")
 
-    print("\nTraining Random Forest...")
+rf = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42,
+)
 
-    rf = RandomForestClassifier(
-        n_estimators=100,
-        random_state=42
-    )
+rf.fit(X_train, y_train)
 
-    rf.fit(X_train, y_train)
+y_pred_rf = rf.predict(X_test)
 
-    y_pred_rf = rf.predict(X_test)
+acc_rf = accuracy_score(y_test, y_pred_rf)
+prec_rf = precision_score(y_test, y_pred_rf)
+rec_rf = recall_score(y_test, y_pred_rf)
+f1_rf = f1_score(y_test, y_pred_rf)
 
-    evaluate_model(
-        "Random Forest",
+print(f"Accuracy : {acc_rf:.4f}")
+print(f"Precision: {prec_rf:.4f}")
+print(f"Recall   : {rec_rf:.4f}")
+print(f"F1 Score : {f1_rf:.4f}")
+
+print("\nClassification Report:")
+print(
+    classification_report(
         y_test,
         y_pred_rf,
-        data.target_names
+        target_names=data.target_names,
     )
+)
 
-    rf_accuracy = accuracy_score(y_test, y_pred_rf)
+# ==========================================================
+# STEP 5: Compare Models
+# ==========================================================
 
-    # 6. MODEL COMPARISON
+print("\n" + "=" * 60)
+print("MODEL COMPARISON")
+print("=" * 60)
 
-    print("\n" + "=" * 60)
-    print("MODEL COMPARISON")
-    print("=" * 60)
+print(f"Logistic Regression Accuracy : {acc_lr:.4f}")
+print(f"Random Forest Accuracy       : {acc_rf:.4f}")
 
-    print(f"Logistic Regression Accuracy : {lr_accuracy:.4f}")
-    print(f"Random Forest Accuracy       : {rf_accuracy:.4f}")
+if acc_lr >= acc_rf:
+    best_model = lr
+    best_scaler = scaler
+    best_name = "Logistic Regression"
+    needs_scaling = True
+else:
+    best_model = rf
+    best_scaler = None
+    best_name = "Random Forest"
+    needs_scaling = False
 
-    if lr_accuracy >= rf_accuracy:
-        best_model = lr
-        best_model_name = "Logistic Regression"
-    else:
-        best_model = rf
-        best_model_name = "Random Forest"
+print(f"\nSelected Model: {best_name}")
 
-    print(f"\nBest Model Selected: {best_model_name}")
+# ==========================================================
+# STEP 6: Save Model and Scaler
+# ==========================================================
 
-    
-    # 7. SAVE MODEL
+joblib.dump(best_model, "model.pkl")
+joblib.dump(scaler, "scaler.pkl")
 
-    print("\nSaving Model...")
+print(
+    f"\nmodel.pkl saved - Size: "
+    f"{os.path.getsize('model.pkl') / 1024:.1f} KB"
+)
 
-    joblib.dump(best_model, "model.pkl")
-    joblib.dump(scaler, "scaler.pkl")
+print(
+    f"scaler.pkl saved - Size: "
+    f"{os.path.getsize('scaler.pkl') / 1024:.1f} KB"
+)
 
-    model_size = os.path.getsize("model.pkl") / 1024
-    scaler_size = os.path.getsize("scaler.pkl") / 1024
-
-    print("\nFiles Saved Successfully")
-    print("-" * 30)
-    print(f"model.pkl  : {model_size:.2f} KB")
-    print(f"scaler.pkl : {scaler_size:.2f} KB")
-
-    print("\nTraining Complete!")
-    print("Artifacts generated:")
-    print(" - model.pkl")
-    print(" - scaler.pkl")
-
-
-if __name__ == "__main__":
-    main()
+print("\nTraining complete!")
+print("Run test_model.py to verify the saved model.")
