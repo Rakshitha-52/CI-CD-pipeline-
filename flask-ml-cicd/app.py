@@ -26,3 +26,21 @@ except FileNotFoundError as e:
     logger.error(f'Model file not found: {e}')
     logger.error('Run train_model.py first to generate model.pkl')
     raise SystemExit(1) # Stop the app — no point running without a model
+
+# nn Route 1: Health Check nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+# GET / fi Returns server status and model info
+# Used by: Cloud Run health checks, developers verifying deployment
+@app.route('/', methods=['GET'])
+def health_check():
+    logger.info('Health check called')
+    return jsonify({
+    'status': 'running',
+    'model': type(model).__name__,
+    'accuracy': '98.25%',
+    'endpoint': 'POST /predict with JSON body {features: [30 floats]}',
+    'dataset': 'Wisconsin Breast Cancer Dataset'
+    }), 200
+# @app.route — decorator that maps the URL '/' to the function below it
+# methods=['GET'] — only GET requests are allowed on this route
+# jsonify() — converts Python dict to JSON response with correct Content-Type header
+# 200 — HTTP status code meaning 'OK, everything worked
