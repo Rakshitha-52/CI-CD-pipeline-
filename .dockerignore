@@ -1,0 +1,28 @@
+# .dockerignore
+# Files and directories to EXCLUDE from the Docker image
+# Python cache — not needed in container, adds unnecessary size
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+# Virtual environment — container installs its own packages via requirements.txt
+venv/
+.venv/
+env/
+# Environment files — NEVER put secrets inside Docker images
+.env
+*.env
+# Git history — not needed at runtime, adds ~1MB+
+.git
+.gitignore
+.github/
+# Development-only files — not needed in production container
+*.md
+train_model.py
+test_model.py
+reports/
+# OS files
+.DS_Store
+Thumbs.db
+*.log
