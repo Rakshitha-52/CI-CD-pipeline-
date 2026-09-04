@@ -38,7 +38,7 @@ jobs:
 
       - name: Run tests
         run: pytest tests/ -v
-        
+
       - name: Build Docker image
         run: |
           docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.SERVICE }}:${{ github.sha }} .
