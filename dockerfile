@@ -71,18 +71,18 @@ USER appuser
 # ==========================================================
 # 8. Expose Port
 # ==========================================================
-# Documents that the application listens on port 5000.
+# Documents that the application listens on port 8080.
 
-EXPOSE 5000
+EXPOSE 8080
 
 
 # ==========================================================
 # 9. Environment Variable
 # ==========================================================
 # Cloud Run overrides PORT automatically.
-# Locally, the default value is 5000.
+    # Locally, the default value is 8080.
 
-ENV PORT=5000
+ENV PORT=8080
 
 
 # ==========================================================
@@ -90,7 +90,7 @@ ENV PORT=5000
 # ==========================================================
 # Run the Flask application using Gunicorn.
 #
-# --bind 0.0.0.0:5000
+# --bind 0.0.0.0:8080
 #     Listen on all network interfaces.
 #
 # --workers 1
@@ -103,4 +103,4 @@ ENV PORT=5000
 #     First "app" = app.py
 #     Second "app" = Flask application object
 
-CMD [ "gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "app:app"]
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 app:app
