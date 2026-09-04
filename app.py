@@ -192,8 +192,11 @@ def not_found(e):
 # Google Cloud Run sets the PORT environment variable.
 # Default to port 5000 when running locally.
 
+
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
+    
 
     logger.info(f"Starting Flask app on port {port}")
 
