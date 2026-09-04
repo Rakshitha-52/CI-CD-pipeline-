@@ -190,7 +190,7 @@ def not_found(e):
 # App Entry Point
 # ============================
 # Google Cloud Run sets the PORT environment variable.
-# Default to port 5000 when running locally.
+# Default to port 8080 when running locally.
 
 
 
