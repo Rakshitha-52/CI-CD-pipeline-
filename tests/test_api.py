@@ -1,5 +1,5 @@
 # tests/test_api.py
-def test_predict_logs_to_db(client):
+def test_predict_logs_to_db(client, tmp_path):
     response = client.post("/predict", json={"features": [0.5] * 30})
     assert response.status_code == 200
     data = response.get_json()
